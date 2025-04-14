@@ -1163,7 +1163,7 @@ class PlagiarismPlugin extends GenericPlugin
 			);
 		
 		$notificationManager = new NotificationManager();
-		$managers = Repo::userGroup()
+		$managers = Repo::user()
 			->getCollector()
 			->filterByContextIds([$context->getId()])
 			->filterByRoleIds([Role::ROLE_ID_MANAGER])
@@ -1178,6 +1178,31 @@ class PlagiarismPlugin extends GenericPlugin
 		}
 
 		error_log("iThenticate submission {$submissionId} failed: {$message}");
+	}
+
+	/**
+	 * Check is ithenticate service access details(API URL & KEY) available at global level or
+	 * for the given context
+	 */
+	public function isServiceAccessAvailable(?Context $context = null): bool
+	{
+		$servicesAccess = collect($this->getServiceAccess($context))
+			->map(
+				fn(mixed $data): string => gettype($data) == "string" ? trim($data) : ""
+			)
+			->filter();
+
+		// If both are empty, so invalid service access
+		if ($servicesAccess->isEmpty()) {
+			return false;
+		}
+
+		// As there should be exactly 2 entries an if not, invalid service access
+		if ($servicesAccess->count() != 2) {
+			return false;
+		}
+
+		return true;
 	}
 
 	/**
@@ -1202,15 +1227,6 @@ class PlagiarismPlugin extends GenericPlugin
 			"{$configKeyName}[{$contextPath}]",
 			Config::getVar('ithenticate', $configKeyName)
 		);
-	}
-
-	/**
-	 * Check is ithenticate service access details(API URL & KEY) available at global level or
-	 * for the given context
-	 */
-	protected function isServiceAccessAvailable(?Context $context = null): bool
-	{
-		return !collect($this->getServiceAccess($context))->filter()->isEmpty();
 	}
 }
 
