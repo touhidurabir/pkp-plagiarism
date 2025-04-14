@@ -981,7 +981,7 @@ class PlagiarismPlugin extends GenericPlugin
 	/**
      * @copydoc Plugin::getActions()
      */
-    function getActions($request, $verb)
+    public function getActions($request, $verb)
     {
         $router = $request->getRouter();
 
@@ -1016,7 +1016,7 @@ class PlagiarismPlugin extends GenericPlugin
     /**
      * @copydoc Plugin::manage()
      */
-    function manage($args, $request) 
+    public function manage($args, $request) 
     {
         switch ($request->getUserVar('verb')) {
             case 'settings':
@@ -1188,7 +1188,7 @@ class PlagiarismPlugin extends GenericPlugin
 	{
 		$servicesAccess = collect($this->getServiceAccess($context))
 			->map(
-				fn(mixed $data): string => gettype($data) == "string" ? trim($data) : ""
+				fn(mixed $data): string => gettype($data) == 'string' ? trim($data) : ''
 			)
 			->filter();
 
@@ -1197,7 +1197,7 @@ class PlagiarismPlugin extends GenericPlugin
 			return false;
 		}
 
-		// As there should be exactly 2 entries an if not, invalid service access
+		// As there should be exactly 2 entries and if not, invalid service access
 		if ($servicesAccess->count() != 2) {
 			return false;
 		}
