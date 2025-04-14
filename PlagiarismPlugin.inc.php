@@ -1217,6 +1217,22 @@ class PlagiarismPlugin extends GenericPlugin {
 	 * @return bool
 	 */
 	protected function isServiceAccessAvailable($context = null) {
-		return !collect($this->getServiceAccess($context))->filter()->isEmpty();
+		$servicesAccess = collect($this->getServiceAccess($context))
+			->map(
+				fn(mixed $data): string => gettype($data) == 'string' ? trim($data) : ''
+			)
+			->filter();
+
+		// If both are empty, so invalid service access
+		if ($servicesAccess->isEmpty()) {
+			return false;
+		}
+
+		// As there should be exactly 2 entries and if not, invalid service access
+		if ($servicesAccess->count() != 2) {
+			return false;
+		}
+
+		return true;
 	}
 }
