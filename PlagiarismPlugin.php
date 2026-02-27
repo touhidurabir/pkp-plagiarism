@@ -917,13 +917,21 @@ class PlagiarismPlugin extends GenericPlugin
 		);
 
 		if ($webhookId = $ithenticate->registerWebhook($signingSecret, $webhookUrl)) {
-			$contextService = app()->get('context'); /** @var \PKP\Services\PKPContextService $contextService */
-			$context = $contextService->edit($context, [
-				'ithenticateWebhookSigningSecret' => $signingSecret,
-				'ithenticateWebhookId' => $webhookId
-			], $request);
+			try {
+				$contextService = app()->get('context'); /** @var \PKP\Services\PKPContextService $contextService */
+				$context = $contextService->edit($context, [
+					'ithenticateWebhookSigningSecret' => $signingSecret,
+					'ithenticateWebhookId' => $webhookId
+				], $request);
 
-			return true;
+				return true;
+			} catch (\Throwable $e) {
+				// DB save failed after API registration succeeded — clean up orphaned webhook
+				error_log("Webhook registered at iThenticate (ID: {$webhookId}) but failed to save to DB for context {$context->getId()}: " . $e->getMessage());
+				$ithenticate->deleteWebhook($webhookId);
+
+				return false;
+			}
 		}
 
 		error_log("unable to complete the iThenticate webhook registration for context id {$context->getId()}");
