@@ -898,8 +898,27 @@ class PlagiarismPlugin extends GenericPlugin
 	}
 
 	/**
+	 * Get the webhook URL for a given context
+	 *
+	 * Format: BASE_URL/index.php/CONTEXT_PATH/$$$call$$$/plugins/generic/plagiarism/controllers/plagiarism-webhook/handle
+	 */
+	public function getWebhookUrl(?Context $context = null): string
+	{
+		$request = Application::get()->getRequest();
+		$context ??= $request->getContext();
+
+		return Application::get()->getDispatcher()->url(
+			$request,
+			Application::ROUTE_COMPONENT,
+			$context->getData('urlPath'),
+			'plugins.generic.plagiarism.controllers.PlagiarismWebhookHandler',
+			'handle'
+		);
+	}
+
+	/**
 	 * Register the webhook for this context
-	 * 
+	 *
 	 * Example webhook format : BASE_URL/index.php/CONTEXT_PATH/$$$call$$$/plugins/generic/plagiarism/controllers/plagiarism-webhook/handle
 	 */
 	public function registerIthenticateWebhook(IThenticate|TestIThenticate $ithenticate, ?Context $context = null): bool
@@ -908,13 +927,7 @@ class PlagiarismPlugin extends GenericPlugin
 		$context ??= $request->getContext();
 
 		$signingSecret = \Illuminate\Support\Str::random(12);
-		$webhookUrl = Application::get()->getDispatcher()->url(
-			$request,
-			Application::ROUTE_COMPONENT,
-			$context->getData('urlPath'),
-			'plugins.generic.plagiarism.controllers.PlagiarismWebhookHandler',
-			'handle'
-		);
+		$webhookUrl = $this->getWebhookUrl($context);
 
 		if ($webhookId = $ithenticate->registerWebhook($signingSecret, $webhookUrl)) {
 			try {
